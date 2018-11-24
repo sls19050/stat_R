@@ -18,59 +18,248 @@ library(dplyr)
 
 ### Load data
 
-Make sure your data and R Markdown files are in the same directory. When loaded
-your data file will be called `brfss2013`. Delete this note when before you submit 
-your work. 
-
 ```{r load-data}
 load("brfss2013.RData")
 ```
-
-
 
 * * *
 
 ## Part 1: Data
 
+### Generalizability
+
+According to the BRFSS documentation, BRFSS conducts both landline telephone- and cellular telephone-based surveys to collect data from non-institutionalized adult population (18 years of age and older) residing in the US. Therefore, among that population, people who cannot participate in telephone-based surveys, such as deaf, dumb people, and families who do not have access to telephones will be excluded from the survey. This is a form of convenience sampling (not truly random sampling), and therefore we cannot generalize the result of this study to the intended population. We can probably generalize the results to the population that 1) can participate in telephone surveys, and 2) non-institutionalized adult population (18 years of age and older) residing in the US.
+
+### Causality
+
+Random assignment was not used in this observational study (and there are no control or treatment groups), therefore we cannot determine causality.
 
 * * *
 
-## Part 2: Research questions
+## Part 2&3: Research questions and EDA
 
-**Research quesion 1:**
+**Research quesion 1 (3 variables: genhlth | X_imprace | X_state) **
 
-**Research quesion 2:**
+Is the probability of finding a healthy person among black people in Washington State much lower than that of finding a healthy person among white people in Washington State? This will help us understand the relationship between ethnicity and health in WA.
 
-**Research quesion 3:**
+Let's understand the 3 variables that we will investigate:
+```{r}
+brfss2013 %>% 
+  select(genhlth, X_imprace, X_state) %>% 
+  str()
+```
 
+These 3 variables are all categorical variables.
+Let's make a dataframe for plotting the health of different ethnic groups in Washington.
+```{r}
+plotData <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth), !is.na(X_imprace))
+
+```
+
+Let's use bar plot to plot data.
+
+```{r}
+
+ggplot(data = plotData, aes(x = X_imprace, fill = genhlth )) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))+
+  geom_bar()
+
+```
+
+So it seems that the white population is much greater than that of the black population.
+Here, I apply filters to count the total number of white and black people in WA in our dataset.
+
+```{r}
+brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(X_imprace == "Black, Non-Hispanic" | X_imprace == "White, Non-Hispanic") %>%
+  filter(!is.na(genhlth)) %>%
+  group_by(X_state) %>%
+  group_by(X_imprace) %>% 
+  summarise(count = n())
+
+tot_white <- 9466
+tot_black <- 216
+```
+
+Here I apply filters to count the total number of healthy white and black people in WA in our dataset.
+```{r}
+brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(X_imprace == "Black, Non-Hispanic" | X_imprace == "White, Non-Hispanic") %>%
+  filter(genhlth == "Good" | genhlth == "Very good" | genhlth == "Excellent") %>%
+  group_by(X_state) %>%
+  group_by(X_imprace) %>% 
+  summarise(count = n())
+
+healthy_white <- 8027
+healthy_black <- 178
+```
+By using the previous results we an compute the probabilities:
+
+```{r}
+P_black_health <- healthy_black/tot_black
+P_white_health <- healthy_white/tot_white
+P_black_health
+P_white_health
+```
+The probability of finding a healthy person among black people in Washington State is less than that of the probability of finding a healthy person among white people in Washington State. 
 
 * * *
 
-## Part 3: Exploratory data analysis
+**Research quesion 2 (3 variables: genhlth | X_impcsex | X_state)**
 
-NOTE: Insert code chunks as needed by clicking on the "Insert a new code chunk" 
-button (green button with orange arrow) above. Make sure that your code is visible
-in the project you submit. Delete this note when before you submit your work.
+Is the probability of finding a healthy person among females in Washington State much lower than that of finding a healthy person among males in Washington State? This will help us understand the relationship between gender and health.
 
-**Research quesion 1:**
-
+Let's understand the 3 variables that we will investigate:
 ```{r}
+brfss2013 %>% 
+  select(genhlth, X_impcsex, X_state) %>% 
+  str()
+```
+
+Let's make a dataframe for plotting the health of different gender in Washington.
+```{r}
+plotData <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth), !is.na(X_impcsex))
 
 ```
 
-
-
-**Research quesion 2:**
+Let's use bar plot to plot data.
 
 ```{r}
 
+ggplot(data = plotData, aes(x = X_impcsex, fill = genhlth )) +
+  theme(axis.text.x = element_text(angle = 0, hjust = 1))+
+  geom_bar()
+
 ```
 
+So it seems that the population is comparable between male and female.
+Here, I apply filters to count the total number of males and females in WA in our dataset.
 
+```{r}
+brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth), !is.na(X_impcsex)) %>%
+  group_by(X_state) %>%
+  group_by(X_impcsex) %>% 
+  summarise(count = n())
 
-**Research quesion 3:**
+tot_male <- 1292
+tot_female <- 1152
+```
+
+Here I apply filters to count the total number of healthy males and females in WA in our dataset.
+```{r}
+brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth), !is.na(X_impcsex)) %>%
+  filter(genhlth == "Good" | genhlth == "Very good" | genhlth == "Excellent") %>%
+  group_by(X_state) %>%
+  group_by(X_impcsex) %>% 
+  summarise(count = n())
+
+healthy_male <- 1143
+healthy_female <- 1023
+```
+By using the previous results we an compute the probabilities:
+
+```{r}
+P_male_health <- healthy_male/tot_male
+P_female_health <- healthy_female/tot_female
+P_male_health
+P_female_health
+```
+The probability of finding a healthy male among males in Washington State is roughly the same as that of the probability of finding a healthy female among females in Washington State.
+
+* * *
+
+**Research quesion 3 (3 variables: genhlth | fmonth | X_state)**
+
+Is the probability of finding a healthy person during flu-season in Washington State lower than that of finding a healthy person during non-flu-season in Washington State? This will help us understand the relationship between flu-season and health. Here we define flu-season as months: `Nov, Dec, Jan, Feb, Mar, Apr`
+
+Let's understand the 3 variables that we will investigate:
+```{r}
+brfss2013 %>% 
+  select(genhlth, fmonth, X_state) %>% 
+  str()
+```
+
+Let's make a dataframe for plotting the health of different gender in Washington.
+```{r}
+plotData <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth), !is.na(fmonth))
+
+```
+
+Let's use bar plot to plot data.
 
 ```{r}
 
+ggplot(data = plotData, aes(x = fmonth, fill = genhlth )) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))+
+  geom_bar()
+
 ```
 
+So it seems that the health data collected through out all months in 2013 are consistent in terms of number of samples and the proportion of healthy individual responses.
+Here, I apply filters to count the total number of samples in flu- and non-flu seasons in WA.
+
+```{r}
+tot_flu <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth)) %>%
+  filter(fmonth == "November" | fmonth == "December" | fmonth == "January" |
+           fmonth == "February" | fmonth == "March" | fmonth == "April") %>%
+  summarise(count = n())
+
+tot_nonflu <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth)) %>%
+  filter(fmonth == "May" | fmonth == "June" | fmonth == "July" |
+           fmonth == "August" | fmonth == "September" | fmonth == "October") %>%
+  summarise(count = n())
+
+tot_flu
+tot_nonflu
+
+```
+
+Here I apply filters to count the total number of healthy people during the flu and non-flu season in WA in our dataset.
+```{r}
+
+healthy_flu <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth)) %>%
+  filter(fmonth == "November" | fmonth == "December" | fmonth == "January" |
+           fmonth == "February" | fmonth == "March" | fmonth == "April") %>%
+  filter(genhlth == "Good" | genhlth == "Very good" | genhlth == "Excellent") %>%
+  summarise(count = n())
+
+healthy_nonflu <- brfss2013 %>% 
+  filter(X_state == "Washington") %>%
+  filter(!is.na(genhlth)) %>%
+  filter(fmonth == "May" | fmonth == "June" | fmonth == "July" |
+           fmonth == "August" | fmonth == "September" | fmonth == "October") %>%
+  filter(genhlth == "Good" | genhlth == "Very good" | genhlth == "Excellent") %>%
+  summarise(count = n())
+
+healthy_flu
+healthy_nonflu
+```
+By using the previous results we an compute the probabilities:
+
+```{r}
+P_flu_health <- healthy_flu/tot_flu
+P_nonflu_health <- healthy_nonflu/tot_nonflu
+P_flu_health
+P_nonflu_health
+```
+The probability of finding a healthy person during flu season in Washington State is roughly the same as that of the probability of finding a healthy person during non-flu season in Washington State.
+
+* * *
